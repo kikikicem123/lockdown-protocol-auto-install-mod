@@ -1,20 +1,29 @@
 @echo off
 setlocal enabledelayedexpansion
 
-echo Enter the full path to the LOCKDOWN Protocol folder (e.g., D:\SteamLibrary\steamapps\common\LOCKDOWN Protocol):
-set /p gameDir=
+set "defaultPath=C:\Program Files (x86)\Steam\steamapps\common\LOCKDOWN Protocol"
 
-if not exist "%gameDir%" (
-    echo The specified path does not exist.
-    goto end
+if exist "%defaultPath%" (
+    set "gameDir=%defaultPath%"
+    echo Found default game path: %gameDir%
+) else (
+    echo Default path not found.
+    echo Enter the full path to the LOCKDOWN Protocol folder (e.g., D:\SteamLibrary\steamapps\common\LOCKDOWN Protocol):
+    set /p gameDir=
+    if not exist "%gameDir%" (
+        echo The specified path does not exist.
+        goto end
+    )
 )
 
 set "win64Path=%gameDir%\LockdownProtocol\Binaries\Win64"
 set "logicModsPath=%gameDir%\LockdownProtocol\Content\Paks\LogicMods"
 
-if not exist "%logicModsPath%" (
-    mkdir "%logicModsPath%"
+if exist "%logicModsPath%" (
+    echo Deleting old LogicMods folder...
+    rmdir /S /Q "%logicModsPath%"
 )
+mkdir "%logicModsPath%"
 
 set "ue4ssFolder="
 for /d %%f in ("UE4SS-*") do (
