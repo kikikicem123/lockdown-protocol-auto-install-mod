@@ -1,78 +1,102 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set "defaultPath=C:\Program Files (x86)\Steam\steamapps\common\LOCKDOWN Protocol"
+echo === Lockdown Protocol Mod Installer ===
 
-if exist "%defaultPath%" (
-    set "gameDir=%defaultPath%"
-    echo Found default game path: %gameDir%
-) else (
-    echo Default path not found.
-    echo Enter the full path to the LOCKDOWN Protocol folder (e.g., D:\SteamLibrary\steamapps\common\LOCKDOWN Protocol):
-    set /p gameDir=
-    if not exist "%gameDir%" (
-        echo The specified path does not exist.
-        goto end
-    )
+set "installerDir=%cd%"
+for %%i in ("%installerDir%") do set "gameDir=%%~dpi"
+set "gameDir=%gameDir:~0,-1%"
+
+if not exist "%gameDir%\LockdownProtocol\" (
+    echo Error: Could not find LockdownProtocol folder in parent directory.
+    echo Please put this installer folder inside the LOCKDOWN Protocol game folder.
+    goto end
 )
 
 set "win64Path=%gameDir%\LockdownProtocol\Binaries\Win64"
-set "logicModsPath=%gameDir%\LockdownProtocol\Content\Paks\LogicMods"
+set "paksPath=%gameDir%\LockdownProtocol\Content\Paks"
+set "logicModsPath=%paksPath%\LogicMods"
 
-if exist "%logicModsPath%" (
-    echo Deleting old LogicMods folder...
-    rmdir /S /Q "%logicModsPath%"
+if not exist "!win64Path!" (
+    echo Error: Missing folder: !win64Path!
+    goto end
 )
-mkdir "%logicModsPath%"
+
+if not exist "!paksPath!" (
+    echo Error: Missing folder: !paksPath!
+    goto end
+)
 
 set "ue4ssFolder="
 for /d %%f in ("UE4SS-*") do (
-    set "ue4ssFolder=%%f"
+    if exist "%%f\dwmapi.dll" if exist "%%f\ue4ss" (
+        set "ue4ssFolder=%%f"
+    )
 )
+
 if not defined ue4ssFolder (
     echo Error: UE4SS folder not found.
     goto end
 )
-echo Copying UE4SS files...
-xcopy "!ue4ssFolder!\*" "%win64Path%\" /E /I /Y
+
+echo Installing UE4SS from !ue4ssFolder!...
+xcopy /Y "!ue4ssFolder!\dwmapi.dll" "!win64Path!\" >nul
+rmdir /S /Q "!win64Path!\ue4ss" >nul 2>&1
+xcopy /Y /E "!ue4ssFolder!\ue4ss" "!win64Path!\ue4ss\" >nul
 if errorlevel 1 (
-    echo Error copying UE4SS files.
+    echo Error: Failed to install UE4SS.
     goto end
 )
 
-set "pppFolder="
+if exist "!logicModsPath!" (
+    echo Deleting old LogicMods...
+    rmdir /S /Q "!logicModsPath!"
+)
+
+echo Creating LogicMods folder...
+mkdir "!logicModsPath!"
+
+set "pppSource="
 for /d %%f in ("PlayerPlusPlus-*") do (
     if exist "%%f\LogicMods\player++" (
-        set "pppFolder=%%f\LogicMods\player++"
+        set "pppSource=%%f\LogicMods\player++"
     )
 )
-if not defined pppFolder (
-    echo Error: LogicMods\player++ folder not found.
-    goto end
-)
-echo Copying player++ files...
-xcopy "!pppFolder!\*" "%logicModsPath%\player++\" /E /I /Y
-if errorlevel 1 (
-    echo Error copying player++ files.
+
+if not defined pppSource (
+    echo Error: player++ folder not found.
     goto end
 )
 
-set "gtmFolder="
-for /d %%f in ("GhostTeleportMod-*") do (
-    set "gtmFolder=%%f"
+echo Installing player++...
+xcopy /Y /E "!pppSource!" "!logicModsPath!\player++\" >nul
+if errorlevel 1 (
+    echo Error: Failed to copy player++.
+    goto end
 )
-if not defined gtmFolder (
+
+set "ghostModFolder="
+for /d %%f in ("GhostTeleportMod-*") do (
+    if exist "%%f" (
+        set "ghostModFolder=%%f"
+    )
+)
+
+if not defined ghostModFolder (
     echo Error: GhostTeleportMod folder not found.
     goto end
 )
-echo Copying GhostTeleportMod files...
-xcopy "!gtmFolder!\*" "%logicModsPath%\GhostTeleportMod\" /E /I /Y
+
+echo Installing GhostTeleportMod...
+xcopy /Y /E "!ghostModFolder!" "!logicModsPath!\GhostTeleportMod\" >nul
 if errorlevel 1 (
-    echo Error copying GhostTeleportMod files.
+    echo Error: Failed to copy GhostTeleportMod.
     goto end
 )
 
 echo All done.
 echo Credit ~Kenz
+goto end
+
 :end
 pause
