@@ -6,8 +6,7 @@ set /p gameDir=
 
 if not exist "%gameDir%" (
     echo The specified path does not exist.
-    pause
-    exit /b
+    goto end
 )
 
 set "win64Path=%gameDir%\LockdownProtocol\Binaries\Win64"
@@ -21,35 +20,50 @@ set "ue4ssFolder="
 for /d %%f in ("UE4SS-*") do (
     set "ue4ssFolder=%%f"
 )
-if defined ue4ssFolder (
-    echo Copying UE4SS from !ue4ssFolder! to %win64Path%...
-    xcopy "!ue4ssFolder!\*" "%win64Path%\" /E /I /Y
-) else (
-    echo UE4SS folder not found.
+if not defined ue4ssFolder (
+    echo Error: UE4SS folder not found.
+    goto end
+)
+echo Copying UE4SS files...
+xcopy "!ue4ssFolder!\*" "%win64Path%\" /E /I /Y
+if errorlevel 1 (
+    echo Error copying UE4SS files.
+    goto end
 )
 
 set "pppFolder="
 for /d %%f in ("PlayerPlusPlus-*") do (
-    set "pppFolder=%%f"
+    if exist "%%f\LogicMods\player++" (
+        set "pppFolder=%%f\LogicMods\player++"
+    )
 )
-if defined pppFolder (
-    echo Copying PlayerPlusPlus from !pppFolder! to %logicModsPath%...
-    xcopy "!pppFolder!\*" "%logicModsPath%\!pppFolder!\" /E /I /Y
-) else (
-    echo PlayerPlusPlus folder not found.
+if not defined pppFolder (
+    echo Error: LogicMods\player++ folder not found.
+    goto end
+)
+echo Copying player++ files...
+xcopy "!pppFolder!\*" "%logicModsPath%\player++\" /E /I /Y
+if errorlevel 1 (
+    echo Error copying player++ files.
+    goto end
 )
 
 set "gtmFolder="
 for /d %%f in ("GhostTeleportMod-*") do (
     set "gtmFolder=%%f"
 )
-if defined gtmFolder (
-    echo Copying GhostTeleportMod from !gtmFolder! to %logicModsPath%...
-    xcopy "!gtmFolder!\*" "%logicModsPath%\!gtmFolder!\" /E /I /Y
-) else (
-    echo GhostTeleportMod folder not found.
+if not defined gtmFolder (
+    echo Error: GhostTeleportMod folder not found.
+    goto end
+)
+echo Copying GhostTeleportMod files...
+xcopy "!gtmFolder!\*" "%logicModsPath%\GhostTeleportMod\" /E /I /Y
+if errorlevel 1 (
+    echo Error copying GhostTeleportMod files.
+    goto end
 )
 
 echo All done.
 echo Credit ~Kenz
+:end
 pause
